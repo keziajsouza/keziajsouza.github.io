@@ -1,3 +1,397 @@
-<html>
-  <p> meu site </p>
- </html>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulação Interativa de Campo Elétrico (2 Cargas)</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f4f4f9;
+            margin: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        #main-container {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            align-items: flex-start;
+        }
+        #flowchart {
+            width: 350px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        #flowchart h2 {
+            color: #007bff;
+            margin-top: 0;
+            font-size: 1.3em;
+        }
+        .flow-step {
+            margin: 15px 0;
+            padding: 12px;
+            border-left: 4px solid #007bff;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .flow-step h3 {
+            margin: 0 0 8px 0;
+            color: #007bff;
+            font-size: 1em;
+        }
+        .flow-step p {
+            margin: 0;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+        .formula {
+            background-color: #e9ecef;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            margin: 8px 0;
+            font-size: 0.85em;
+        }
+        .arrow {
+            text-align: center;
+            color: #007bff;
+            font-size: 1.5em;
+            margin: 5px 0;
+        }
+        #simulation-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        #controls {
+            margin-top: 20px;
+            width: 600px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .control-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="range"] {
+            width: 100%;
+        }
+        .charge-value {
+            font-weight: bold;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Simulação Interativa de Campo Elétrico</h1>
+    <p>Arraste as cargas na tela para mudar a posição e use os controles para alterar a magnitude.</p>
+
+    <div id="main-container">
+        <!-- Fluxograma Didático -->
+        <div id="flowchart">
+            <h2>📊 Como Funciona a Simulação</h2>
+            
+            <div class="flow-step">
+                <h3>1️⃣ Inicialização</h3>
+                <p>Sistema cria duas cargas elétricas (q1 positiva e q2 negativa) em posições iniciais</p>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="flow-step">
+                <h3>2️⃣ Interação do Usuário</h3>
+                <p><strong>Arrastar:</strong> Clique e arraste as cargas para mudar posição</p>
+                <p><strong>Sliders:</strong> Ajuste a magnitude das cargas (de -5C a +5C)</p>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="flow-step">
+                <h3>3️⃣ Cálculo do Campo</h3>
+                <p>Para cada ponto da grade (25×25 pontos):</p>
+                <div class="formula">
+                    E⃗ = Σ k·q·R⃗ / |R⃗|³
+                </div>
+                <p style="font-size: 0.85em; color: #666;">
+                    <strong>R⃗:</strong> vetor da carga ao ponto<br>
+                    <strong>k:</strong> constante de Coulomb<br>
+                    <strong>q:</strong> valor da carga
+                </p>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="flow-step">
+                <h3>4️⃣ Visualização</h3>
+                <p><strong>Vetores:</strong> Setas mostram direção e intensidade do campo</p>
+                <p><strong>Cor das setas:</strong> Mais escuras = campo mais forte</p>
+                <p><strong>Cargas:</strong> Vermelho (+) / Azul (-)</p>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="flow-step">
+                <h3>5️⃣ Atualização Contínua</h3>
+                <p>O sistema recalcula tudo 60 vezes por segundo, criando uma animação fluida e responsiva</p>
+            </div>
+        </div>
+
+        <!-- Simulação e Controles -->
+        <div>
+            <div id="simulation-container"></div>
+            
+            <div id="controls">
+                <h2>Controles das Cargas</h2>
+                
+                <div class="control-group">
+                    <label for="slider_q1">Carga q1 (C): <span id="q1_display" class="charge-value">1.0</span></label>
+                    <input type="range" id="slider_q1" min="-5" max="5" step="0.1" value="1.0">
+                </div>
+
+                <div class="control-group">
+                    <label for="slider_q2">Carga q2 (C): <span id="q2_display" class="charge-value">-1.0</span></label>
+                    <input type="range" id="slider_q2" min="-5" max="5" step="0.1" value="-1.0">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        
+        // ===================================================================================
+        // VARIÁVEIS DE SIMULAÇÃO E FUNÇÕES BÁSICAS
+        // ===================================================================================
+        
+        // Constantes e Configurações
+        const CANVAS_SIZE = 600;
+        const GRID_DENSITY = 25; // Número de vetores a serem exibidos em cada direção
+        const K_COULOMB_SCALE = 5000; // Constante de escala para visualização em pixels
+        
+        let charges = [];
+        let selectedCharge = null; // Carga que está sendo arrastada (Item 1)
+
+        // Estrutura de Carga
+        class Charge {
+            constructor(q, x, y, name) {
+                this.q = q;
+                this.x = x;
+                this.y = y;
+                this.name = name;
+                this.radius = 15;
+            }
+        }
+        
+        // Função de Cálculo do Campo Elétrico (A lógica física reescrita em JS)
+        function calculateElectricField(r, charges) {
+            let Ex = 0;
+            let Ey = 0;
+
+            for (let charge of charges) {
+                // Vetor Deslocamento R = r - r_charge
+                let Rx = r.x - charge.x;
+                let Ry = r.y - charge.y;
+                
+                // Distância ao Quadrado
+                let r_squared = Rx * Rx + Ry * Ry;
+                
+                // Evita divisão por zero
+                const MIN_DISTANCE_SQUARED = 100; // Raio de 10px (em pixels) para evitar singularidade
+                if (r_squared < MIN_DISTANCE_SQUARED) {
+                    continue; // Pula o cálculo se estiver muito perto da carga
+                }
+
+                // Distância ao Cubo |R|^3 = (r_squared)^(3/2)
+                let r_mag_cubed = Math.pow(r_squared, 1.5);
+                
+                // E = k * q * R / |R|^3
+                let E_mag_component = K_COULOMB_SCALE * charge.q / r_mag_cubed;
+
+                Ex += E_mag_component * Rx;
+                Ey += E_mag_component * Ry;
+            }
+
+            return createVector(Ex, Ey);
+        }
+        
+        // ===================================================================================
+        // FUNÇÕES P5.JS (SETUP E LOOP DE DESENHO)
+        // ===================================================================================
+        
+        function setup() {
+            // Cria o canvas da simulação
+            let canvas = createCanvas(CANVAS_SIZE, CANVAS_SIZE);
+            canvas.parent('simulation-container'); // Conecta ao div HTML
+            
+            // Conecta os eventos do mouse para arrastar (Item 1)
+            canvas.mousePressed(onMousePressed);
+            canvas.mouseReleased(onMouseReleased);
+
+            // Inicializa as cargas (no centro do canvas)
+            charges.push(new Charge(1.0, CANVAS_SIZE * 0.3, CANVAS_SIZE * 0.5, "q1"));
+            charges.push(new Charge(-1.0, CANVAS_SIZE * 0.7, CANVAS_SIZE * 0.5, "q2"));
+
+            // Conecta os sliders (Item 2)
+            document.getElementById('slider_q1').oninput = updateChargeQ;
+            document.getElementById('slider_q2').oninput = updateChargeQ;
+            
+            // Exibe os valores iniciais
+            updateChargeQ();
+            
+            console.log("Setup da Simulação concluído.");
+        }
+
+        function draw() {
+            // Este loop é chamado 60 vezes por segundo (FPS) e garante o Item 3
+            background(255); // Limpa o fundo
+
+            // 1. Atualiza a posição da carga arrastada (Item 1)
+            if (selectedCharge) {
+                selectedCharge.x = mouseX;
+                selectedCharge.y = mouseY;
+            }
+            
+            // 2. Desenha o Campo Elétrico (Item 3)
+            drawElectricField();
+
+            // 3. Desenha as Cargas
+            drawCharges();
+        }
+
+        function drawElectricField() {
+            // Verifica se as cargas têm o mesmo sinal
+            let sameSign = (charges[0].q * charges[1].q) > 0;
+            
+            // Itera sobre a grade de pontos
+            for (let i = 0; i < GRID_DENSITY; i++) {
+                for (let j = 0; j < GRID_DENSITY; j++) {
+                    // Mapeia a posição do grid para coordenadas do canvas
+                    let x = map(i, 0, GRID_DENSITY - 1, 0, CANVAS_SIZE);
+                    let y = map(j, 0, GRID_DENSITY - 1, 0, CANVAS_SIZE);
+                    
+                    // Se as cargas têm o mesmo sinal, evita desenhar vetores na região entre elas
+                    if (sameSign) {
+                        let midX = (charges[0].x + charges[1].x) / 2;
+                        let midY = (charges[0].y + charges[1].y) / 2;
+                        let distToMid = dist(x, y, midX, midY);
+                        let chargesDistance = dist(charges[0].x, charges[0].y, charges[1].x, charges[1].y);
+                        
+                        // Não desenha vetores muito próximos à linha que conecta as cargas
+                        if (distToMid < chargesDistance * 0.15) {
+                            continue;
+                        }
+                    }
+                    
+                    // Calcula o campo E no ponto (x, y)
+                    let r = createVector(x, y);
+                    let E = calculateElectricField(r, charges);
+                    
+                    let E_mag = E.mag();
+
+                    // Mapeamento de Cor e Tamanho do Vetor
+                    // Cor: Mapeia a magnitude de E para uma cor (escala de 0 a 1)
+                    let color_scale = map(E_mag, 0, 5, 0, 255); 
+                    // Setas mais fortes (E_mag maior) serão mais escuras
+                    stroke(color_scale, 150); 
+                    
+                    // Tamanho da Seta: Normaliza E e ajusta o comprimento visual
+                    // O campo é sempre recalculado em função da posição/carga (Item 3)
+                    E.normalize();
+                    let arrow_length = 20;
+
+                    // Desenha o vetor (seta)
+                    push(); // Salva o estado atual
+                    translate(x, y); // Move a origem para o ponto (x, y)
+                    rotate(E.heading()); // Rotaciona para a direção do vetor E
+                    line(0, 0, arrow_length, 0); // Desenha a linha
+                    line(arrow_length, 0, arrow_length - 5, -3); // Ponta da seta 1
+                    line(arrow_length, 0, arrow_length - 5, 3);  // Ponta da seta 2
+                    pop(); // Restaura o estado original
+                }
+            }
+        }
+        
+        function drawCharges() {
+            for (let charge of charges) {
+                // Cor e Raio (Item 3)
+                if (charge.q > 0) {
+                    fill(255, 0, 0, 200); // Vermelho para positivo
+                } else if (charge.q < 0) {
+                    fill(0, 0, 255, 200); // Azul para negativo
+                } else {
+                    fill(150); // Cinza para neutro
+                }
+                
+                // Raio proporcional à magnitude
+                charge.radius = 10 + 5 * Math.abs(charge.q);
+
+                // Desenha o círculo
+                noStroke();
+                ellipse(charge.x, charge.y, charge.radius * 2);
+
+                // Texto (valor da carga)
+                fill(255); // Texto branco no centro
+                textAlign(CENTER, CENTER);
+                textSize(12);
+                text(charge.name, charge.x, charge.y - 5);
+                text(charge.q.toFixed(1), charge.x, charge.y + 10);
+            }
+        }
+
+        // ===================================================================================
+        // FUNÇÕES DE INTERATIVIDADE (Callbacks)
+        // ===================================================================================
+
+        // Item 1: Eventos de Arrastar
+        function onMousePressed() {
+            // Verifica se clicou em alguma carga
+            for (let charge of charges) {
+                let d = dist(mouseX, mouseY, charge.x, charge.y);
+                if (d < charge.radius) {
+                    selectedCharge = charge;
+                    break;
+                }
+            }
+        }
+
+        function onMouseReleased() {
+            // Libera a carga (termina o arrasto)
+            selectedCharge = null;
+        }
+
+        // Item 2: Atualização dos Sliders
+        function updateChargeQ() {
+            const slider1 = document.getElementById('slider_q1');
+            const slider2 = document.getElementById('slider_q2');
+            
+            // 1. Atualiza as variáveis da simulação (JS)
+            charges[0].q = parseFloat(slider1.value);
+            charges[1].q = parseFloat(slider2.value);
+
+            // 2. Atualiza os displays (HTML)
+            document.getElementById('q1_display').innerText = charges[0].q.toFixed(1);
+            document.getElementById('q2_display').innerText = charges[1].q.toFixed(1);
+            
+            // Nota: Não é necessário chamar 'draw()' explicitamente, pois o loop 'draw'
+            // está rodando continuamente e já irá redesenhar o campo com os novos valores.
+        }
+
+    </script>
+</body>
+</html>
